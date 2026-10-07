@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Домашнє завдання NIX | Практика роботи з AI</title>
+    
+    <!-- Підключення шрифту Noto Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <!-- Підключення Tailwind CSS через CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        nixBlue: '#00A6EB',
+                        nixRed: '#E60036',
+                        nixLightBlue: '#81D0F4',
+                        nixLightRed: '#EF958C',
+                        nixDarkBlue: '#2A668E',
+                        nixGreyPurple: '#937C8A',
+                        nixDarkGrey: '#302A40',
+                        nixDarkRed: '#951B3C',
+                    },
+                    fontFamily: {
+                        sans: ['"Noto Sans"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Базові стилі для кращого відображення на різних пристроях */
+        body {
+            background-color: #f9fafb;
+            color: #302A40; /* nixDarkGrey */
+            line-height: 1.6;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #937C8A; 
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #302A40; 
+        }
+    </style>
+</head>
+<body class="custom-scrollbar font-sans antialiased text-nixDarkGrey bg-gray-50 flex flex-col min-h-screen">
+
+    <nav class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex-shrink-0 flex items-center">
+                    <img class="h-8 md:h-10 w-auto" src="images/nix_logo_main.png" alt="NIX Logo">
+                </div>
+                <div class="flex items-center">
+                    <span class="text-sm font-semibold text-nixDarkBlue bg-nixLightBlue/20 px-3 py-1.5 rounded-full hidden md:block">Практика роботи з AI</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8 flex-grow">
+        
+        <!-- Шапка сторінки -->
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-nixDarkGrey mb-4">Домашнє завдання</h1>
+            <h2 class="text-2xl text-nixDarkBlue font-semibold">Практика роботи з AI-інструментами</h2>
+        </header>
+
+        <!-- ==================== ДЗ 1 ==================== -->
+        <section class="mb-16 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="border-b-4 border-nixRed bg-gray-50 px-6 py-5">
+                <h2 class="text-3xl font-bold text-nixRed">ДЗ 1. Розберіть свою робочу пошту за допомогою Gemini</h2>
+            </div>
+            
+            <div class="p-6 md:p-8">
+                
+                <!-- Інформаційний блок -->
+                <div class="bg-nixLightBlue/15 border-l-4 border-nixBlue rounded-r-lg p-5 mb-8">
+                    <h3 class="font-bold text-nixBlue text-lg mb-2 flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Загальна інформація
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="font-semibold text-nixDarkGrey">Мета:</div>
+                        <div class="md:col-span-3">Навчитися використовувати AI для швидкого аналізу робочого листування, пошуку важливої інформації та формування списку наступних дій.</div>
+                        
+                        <div class="font-semibold text-nixDarkGrey mt-2 md:mt-0">Час виконання:</div>
+                        <div class="md:col-span-3">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-nixRed">~ 15-20 хвилин</span>
+                        </div>
+                        
+                        <div class="font-semibold text-nixDarkGrey mt-2 md:mt-0">Інструмент:</div>
+                        <div class="md:col-span-3">
+                            <a href="https://gemini.google.com/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors shadow-sm">
+                                <svg class="w-4 h-4 mr-1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 22C12 22 12 16.5 17.5 16.5C12 16.5 12 11 12 11C12 11 12 16.5 6.5 16.5C12 16.5 12 22 12 22Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 8C19 8 19 5.5 21.5 5.5C19 5.5 19 3 19 3C19 3 19 5.5 16.5 5.5C19 5.5 19 8 19 8Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                Google Gemini
+                            </a>
+                            <p class="text-sm text-gray-600 mt-2 italic">Якщо у вашому Google Workspace доступний Gemini у Gmail, можна працювати безпосередньо з поштою через Gmail.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Завдання -->
+                <div class="mb-8">
+                    <h3 class="text-2xl font-bold text-nixBlue mb-4">Завдання</h3>
+                    <p class="mb-3">Уявіть, що ви повернулися після кількох днів відсутності й маєте швидко зрозуміти, що відбувається у вашій робочій пошті та чи потребує від вас хтось дій. Використайте Gemini, щоб проаналізувати частину власної робочої пошти.</p>
+                    
+                    <div class="bg-gray-50 border border-nixGreyPurple/30 rounded-lg p-4 italic text-nixDarkGrey mb-6 text-sm">
+                        <span class="font-bold text-nixGreyPurple">Важливо:</span> Не потрібно шукати спеціальні листи або створювати штучні дані. Працюйте з тим листуванням, яке вже є у вашій пошті.
+                    </div>
+                </div>
+
+                <div class="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-nixDarkBlue/20 before:to-transparent">
+                    
+                    <!-- Крок 1 -->
+                    <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                        <div class="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-nixDarkBlue text-white font-bold shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">1</div>
+                        <div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white border border-nixDarkBlue/30 hover:border-nixDarkBlue p-5 rounded-xl shadow-sm hover:shadow-md transition-all">
+                            <h4 class="font-bold text-lg text-nixDarkGrey mb-2">Знайдіть актуальне листування</h4>
+                            <p class="text-sm">Попросіть Gemini знайти та проаналізувати робочі листи за останній тиждень або два. Якщо у вас дуже багато листів, можете обмежити аналіз конкретним періодом, проєктом, клієнтом, темою або відправником.</p>
+                        </div>
+                    </div>
+
+                    <!-- Крок 2 -->
+                    <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                        <div class="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-nixDarkBlue text-white font-bold shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">2</div>
+                        <div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white border border-nixDarkBlue/30 hover:border-nixDarkBlue p-5 rounded-xl shadow-sm hover:shadow-md transition-all">
+                            <h4 class="font-bold text-lg text-nixDarkGrey mb-2">Попросіть Gemini зробити аналіз</h4>
+                            <p class="text-sm mb-2 text-gray-500">Наприклад, використайте такий промпт:</p>
+                            <div class="bg-gray-50 p-3 rounded border border-gray-200 text-sm italic mb-2">
+                                «Проаналізуй мою робочу пошту за останні 2 тижні та допоможи мені зрозуміти, що потребує моєї уваги. Знайди:
+                                <ul class="list-disc list-inside mt-1 space-y-1 ml-2 not-italic">
+                                    <li>важливі новини та оновлення;</li>
+                                    <li>листи, на які мені потрібно відповісти;</li>
+                                    <li>задачі або дії, які очікують від мене;</li>
+                                    <li>дедлайни та важливі дати;</li>
+                                    <li>питання, які залишилися без відповіді;</li>
+                                    <li>потенційно термінові або критичні ситуації.</li>
+                                </ul>
+                                Згрупуй інформацію за пріоритетом і дай посилання на відповідні листи, якщо це можливо.»
+                            </div>
+                            <p class="text-xs text-gray-500">Ви можете змінити цей запит під свою ситуацію.</p>
+                        </div>
+                    </div>
+
+                    <!-- Крок 3 -->
+                    <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                        <div class="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-nixDarkBlue text-white font-bold shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">3</div>
+                        <div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white border border-nixDarkBlue/30 hover:border-nixDarkBlue p-5 rounded-xl shadow-sm hover:shadow-md transition-all">
+                            <h4 class="font-bold text-lg text-nixDarkGrey mb-2">Перетворіть інформацію на план дій</h4>
+                            <p class="text-sm mb-2 text-gray-500">Попросіть Gemini:</p>
+                            <div class="bg-gray-50 p-3 rounded border border-gray-200 text-sm italic">
+                                «На основі знайденого склади мій список наступних дій. Для кожної дії вкажи:
+                                <ul class="list-disc list-inside mt-1 space-y-1 ml-2 not-italic">
+                                    <li>що потрібно зробити;</li>
+                                    <li>чому це потрібно зробити;</li>
+                                    <li>дедлайн, якщо він відомий;</li>
+                                    <li>з ким потрібно взаємодіяти;</li>
+                                    <li>на який лист або інформацію ти спираєшся.</li>
+                                </ul>
+                                Не вигадуй дедлайни або факти, яких немає в листуванні.»
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Крок 4 -->
+                    <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                        <div class="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-nixDarkBlue text-white font-bold shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">4</div>
+                        <div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white border border-nixDarkBlue/30 hover:border-nixDarkBlue p-5 rounded-xl shadow-sm hover:shadow-md transition-all">
+                            <h4 class="font-bold text-lg text-nixDarkGrey mb-2">Перевірте результат</h4>
+                            <p class="text-sm mb-2">Не приймайте відповідь Gemini автоматично. Виберіть 2–3 висновки та перевірте їх у відповідних листах. <strong>Зверніть увагу:</strong></p>
+                            <ul class="text-sm list-none space-y-1 ml-1 text-nixDarkGrey">
+                                <li class="flex items-start"><span class="text-nixBlue mr-2 mt-0.5">●</span> Чи правильно AI зрозумів контекст?</li>
+                                <li class="flex items-start"><span class="text-nixBlue mr-2 mt-0.5">●</span> Чи не переплутав він людей або події?</li>
+                                <li class="flex items-start"><span class="text-nixBlue mr-2 mt-0.5">●</span> Чи правильно визначив пріоритет?</li>
+                                <li class="flex items-start"><span class="text-nixBlue mr-2 mt-0.5">●</span> Чи не додав інформацію, якої не було в листуванні?</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-12">
+                    <!-- Результат -->
+                    <div class="bg-nixLightRed/15 border-l-4 border-nixRed rounded-r-lg p-5 mb-6">
+                        <h3 class="font-bold text-nixRed text-lg mb-3">Очікуваний результат</h3>
+                        <p class="mb-3">Наприкінці у вас має бути короткий список:</p>
+                        <ul class="space-y-2 mb-4 font-semibold">
+                            <li class="flex items-center"><span class="w-4 h-4 rounded-full bg-nixRed mr-3 shadow-sm inline-block"></span> Потрібно зробити терміново</li>
+                            <li class="flex items-center"><span class="w-4 h-4 rounded-full bg-amber-400 mr-3 shadow-sm inline-block"></span> Потрібно зробити найближчим часом</li>
+                            <li class="flex items-center"><span class="w-4 h-4 rounded-full bg-emerald-500 mr-3 shadow-sm inline-block"></span> Можна відкласти / просто знати</li>
+                        </ul>
+                        <p class="text-sm text-gray-700">А також 2–3 приклади того, де Gemini реально заощадив вам час або допоміг побачити зв'язок між листами.</p>
+                    </div>
+
+                    <!-- Warning -->
+                    <div class="bg-nixDarkRed/5 border border-nixDarkRed/20 rounded-lg p-4 flex items-start">
+                        <svg class="w-6 h-6 text-nixDarkRed mr-3 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        <div>
+                            <h4 class="font-bold text-nixDarkRed text-sm uppercase tracking-wider mb-1">Важливо!</h4>
+                            <p class="text-sm text-nixDarkGrey">Якщо ваша робоча пошта містить конфіденційну інформацію, персональні дані або комерційну таємницю, суворо дотримуйтеся політик вашої компанії щодо використання AI.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== ДЗ 2 ==================== -->
+        <section id="task2" class="mb-8 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-nixBlue to-nixLightBlue"></div>
+            <div class="border-b border-gray-100 bg-gray-50/50 px-6 py-6 md:px-8">
+                <h2 class="text-3xl md:text-4xl font-bold text-nixBlue">ДЗ 2. AI-агенти в бізнесі: дослідження та мультимедійний контент у NotebookLM (Gemini Notebook)</h2>
+            </div>
+            
+            <div class="p-6 md:p-8">
+                
+                <!-- Інформаційний блок -->
+                <div class="bg-nixLightBlue/10 border border-nixBlue/20 rounded-xl p-5 md:p-6 mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
+                        <div class="font-semibold text-nixDarkGrey">Мета:</div>
+                        <div class="md:col-span-3 text-sm md:text-base text-gray-700 leading-relaxed">Спробувати NotebookLM (Gemini Notebook) як AI-інструмент для роботи з кількома джерелами та побачити, як одну й ту саму інформацію можна перетворити на різні формати контенту.</div>
+                        
+                        <div class="font-semibold text-nixDarkGrey mt-3 md:mt-0">Орієнтовний час:</div>
+                        <div class="md:col-span-3">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-nixRed/10 text-nixRed border border-nixRed/20">
+                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                ~ 20-30 хвилин
+                            </span>
+                        </div>
+
+                        <div class="font-semibold text-nixDarkGrey mt-3 md:mt-0">Інструмент:</div>
+                        <div class="md:col-span-3">
+                            <a href="https://notebooklm.google.com/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-4 py-2 rounded-xl text-sm font-bold bg-nixBlue/10 text-nixBlue hover:bg-nixBlue hover:text-white transition-all shadow-sm">
+                                <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 19V5C4 3.89543 4.89543 3 6 3H19C20.1046 3 21 3.89543 21 5V19C21 20.1046 20.1046 21 19 21H6C4.89543 21 4 20.1046 4 19ZM4 19C4 17.8954 4.89543 17 6 17H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 11H9M15 7H9M9 15H11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                NotebookLM (Gemini Notebook)
+                            </a>
+                        </div>
+                        
+                        <div class="font-semibold text-nixDarkGrey mt-3 md:mt-0">Тема:</div>
+                        <div class="md:col-span-3 text-sm">
+            <div class="bg-gray-50/80 border border-nixGreyPurple/30 rounded-xl p-4 md:p-5 italic text-nixDarkGrey mb-8 text-sm md:text-base flex items-start">
+                <span class="text-xl mr-3 not-italic">💡</span>
+                <div><span class="font-bold text-nixGreyPurple not-italic">Примітка:</span> Завдання не перевіряється. Тут немає правильної чи неправильної відповіді. Головне — спробувати різні можливості NotebookLM (Gemini Notebook).</div>
+            </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 border border-nixGreyPurple/30 rounded-lg p-4 italic text-nixDarkGrey mb-8 text-sm">
+                    <span class="font-bold text-nixGreyPurple">Примітка:</span> Завдання не перевіряється. Тут немає правильної чи неправильної відповіді. Головне — спробувати різні можливості NotebookLM.
+                </div>
+
+                <h3 class="text-2xl font-bold text-nixBlue mb-6">Хід виконання</h3>
+                
+                <div class="space-y-6">
+                    
+                    <!-- Крок 1 -->
+                    <div class="border border-gray-200 rounded-xl p-5 hover:border-nixBlue/50 transition-colors">
+                        <h4 class="font-bold text-lg text-nixDarkBlue mb-3 flex items-center">
+                            <span class="bg-nixDarkBlue text-white text-sm w-6 h-6 rounded-full flex items-center justify-center mr-3">1</span>
+                            Створіть Notebook
+                        </h4>
+                        <p class="mb-2">Створіть новий Notebook з назвою <strong>«AI-агенти в бізнесі»</strong>.</p>
+                        <p class="mb-2">Додайте до нього мінімум 3 джерела про AI-агентів. Це можуть бути:</p>
+                        <ul class="flex flex-wrap gap-2 mb-3">
+                            <li class="bg-gray-100 px-3 py-1 rounded text-sm text-gray-700">Статті</li>
+                            <li class="bg-gray-100 px-3 py-1 rounded text-sm text-gray-700">PDF-файли</li>
+                            <li class="bg-gray-100 px-3 py-1 rounded text-sm text-gray-700">Вебсторінки</li>
+                            <li class="bg-gray-100 px-3 py-1 rounded text-sm text-gray-700">Відео YouTube</li>
+                            <li class="bg-gray-100 px-3 py-1 rounded text-sm text-gray-700">Дослідження</li>
+                            <li class="bg-gray-100 px-3 py-1 rounded text-sm text-gray-700">Матеріали компаній</li>
+                        </ul>
+                        <p class="text-xs text-gray-500 italic">Порада: не витрачайте багато часу на пошук ідеальних джерел — завдання полягає саме в тому, щоб побачити, що NotebookLM може зробити з інформацією з різних джерел.</p>
+                    </div>
+
+                    <!-- Крок 2 -->
+                    <div class="border border-gray-200 rounded-xl p-5 hover:border-nixBlue/50 transition-colors">
+                        <h4 class="font-bold text-lg text-nixDarkBlue mb-3 flex items-center">
+                            <span class="bg-nixDarkBlue text-white text-sm w-6 h-6 rounded-full flex items-center justify-center mr-3">2</span>
+                            Проведіть коротке дослідження
+                        </h4>
+                        <p class="mb-3">Поставте NotebookLM кілька запитань:</p>
+                        <ul class="space-y-2 text-sm bg-gray-50 p-4 rounded-lg border border-gray-100 italic">
+                            <li class="flex items-start"><span class="text-nixBlue mr-2 font-bold not-italic">?</span> Простими словами поясни, що таке AI-агенти та чим вони відрізняються від звичайних чат-ботів.</li>
+                            <li class="flex items-start"><span class="text-nixBlue mr-2 font-bold not-italic">?</span> Які бізнес-задачі найкраще підходять для AI-агентів? Наведи конкретні приклади.</li>
+                            <li class="flex items-start"><span class="text-nixBlue mr-2 font-bold not-italic">?</span> Які переваги та ризики використання AI-агентів у бізнесі?</li>
+                            <li class="flex items-start"><span class="text-nixBlue mr-2 font-bold not-italic">?</span> Порівняй інформацію з усіх джерел. У чому вони погоджуються, а де мають різні погляди?</li>
+                        </ul>
+                        <p class="mt-3 text-sm font-medium text-gray-700">Після цього переходьте до головної частини завдання.</p>
+                    </div>
+
+                    <!-- Крок 3 -->
+                    <div class="border border-nixBlue/30 rounded-xl p-5 shadow-sm bg-blue-50/30">
+                        <h4 class="font-bold text-lg text-nixDarkBlue mb-3 flex items-center">
+                            <span class="bg-nixDarkBlue text-white text-sm w-6 h-6 rounded-full flex items-center justify-center mr-3">3</span>
+                            Перетворіть дослідження на різні формати
+                        </h4>
+                        <p class="mb-5">Використайте Studio у NotebookLM та створіть щонайменше 5 різних типів результатів.</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Формат 1 -->
+                            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                                <h5 class="font-bold text-nixRed mb-2 flex items-center">
+                                    <span class="text-xl mr-2">📊</span> 1. Таблиця
+                                </h5>
+                                <p class="text-sm font-semibold mb-2">«Де бізнесу варто використовувати AI-агентів»</p>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full text-xs text-left text-gray-500">
+                                        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                                            <tr>
+                                                <th class="px-2 py-1">Бізнес-процес</th>
+                                                <th class="px-2 py-1">Що робить AI</th>
+                                                <th class="px-2 py-1">Користь</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr class="bg-white border-b"><td class="px-2 py-1">Пошта</td><td class="px-2 py-1">...</td><td class="px-2 py-1">...</td></tr>
+                                            <tr class="bg-white"><td class="px-2 py-1">Продажі</td><td class="px-2 py-1">...</td><td class="px-2 py-1">...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <p class="text-[11px] text-gray-400 mt-2 italic">Не обов'язково ці категорії — нехай NotebookLM сформує їх сам.</p>
+                            </div>
+
+                            <!-- Формат 2 -->
+                            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                                <h5 class="font-bold text-nixBlue mb-2 flex items-center">
+                                    <span class="text-xl mr-2">📑</span> 2. Презентація
+                                </h5>
+                                <p class="text-sm font-semibold mb-2">«AI-агенти в бізнесі: можливості та ризики»</p>
+                                <p class="text-sm text-gray-600">Спробуйте зробити її так, ніби ви маєте 5 хвилин, щоб пояснити тему керівнику. Подивіться, як матеріал структурується на основі фактів.</p>
+                            </div>
+
+                            <!-- Формат 3 -->
+                            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                                <h5 class="font-bold text-emerald-600 mb-2 flex items-center">
+                                    <span class="text-xl mr-2">🎧</span> 3. Аудіо
+                                </h5>
+                                <p class="text-sm font-semibold mb-2">Audio Overview</p>
+                                <p class="text-sm text-gray-600 mb-2">Прослухайте та зверніть увагу на структуру, пріоритети та зручність сприйняття.</p>
+                                <p class="text-xs font-medium text-nixDarkGrey">Спробуйте поставити додаткове питання щодо почутого.</p>
+                            </div>
+
+                            <!-- Формат 4 -->
+                            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                                <h5 class="font-bold text-purple-600 mb-2 flex items-center">
+                                    <span class="text-xl mr-2">🎥</span> 4. Відео
+                                </h5>
+                                <p class="text-sm font-semibold mb-2">Video Overview</p>
+                                <p class="text-sm text-gray-600">Подивіться, як NotebookLM перетворює текстову інформацію на відеоформат. Змініть стиль, якщо є така опція.</p>
+                            </div>
+
+                            <!-- Формат 5 -->
+                            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 md:col-span-2">
+                                <h5 class="font-bold text-amber-500 mb-2 flex items-center">
+                                    <span class="text-xl mr-2">📈</span> 5. Інфографіка
+                                </h5>
+                                <p class="text-sm font-semibold mb-2">«Як AI-агент працює в бізнесі»</p>
+                                <div class="bg-gray-50 rounded p-3 text-sm text-center font-mono overflow-x-auto whitespace-nowrap mb-2 border border-gray-100">
+                                    Задача → Аналіз → Рішення → Інструменти → Дія → Результат
+                                </div>
+                                <p class="text-sm text-gray-600">Або попросіть NotebookLM самостійно запропонувати структуру інфографіки.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Крок 4 -->
+                    <div class="border border-gray-200 rounded-xl p-5 hover:border-nixBlue/50 transition-colors">
+                        <h4 class="font-bold text-lg text-nixDarkBlue mb-3 flex items-center">
+                            <span class="bg-nixDarkBlue text-white text-sm w-6 h-6 rounded-full flex items-center justify-center mr-3">4</span>
+                            Спробуйте ще одну можливість
+                        </h4>
+                        <p class="mb-3 text-sm">Після створення всіх форматів поверніться до NotebookLM і запитайте:</p>
+                        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 text-sm font-medium italic text-gray-700 mb-3">
+                            «Який із створених форматів найкраще підходить для пояснення теми керівнику, який має лише 5 хвилин? Обґрунтуй свою відповідь.»
+                        </div>
+                        <p class="text-sm font-semibold text-nixDarkGrey">Порівняйте відповідь із власною думкою.</p>
+                    </div>
+                </div>
+
+                <div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Що потрібно зробити -->
+                    <div class="bg-nixLightBlue/10 border-t-4 border-nixBlue rounded-b-lg p-5">
+                        <h3 class="font-bold text-nixBlue text-lg mb-4 flex items-center">Що має бути створено:</h3>
+                        <ul class="space-y-2 text-sm font-medium">
+                            <li class="flex items-center"><svg class="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg> Notebook із джерелами</li>
+                            <li class="flex items-center"><svg class="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg> Таблицю</li>
+                            <li class="flex items-center"><svg class="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg> Презентацію</li>
+                            <li class="flex items-center"><svg class="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg> Audio Overview</li>
+                            <li class="flex items-center"><svg class="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg> Video Overview</li>
+                            <li class="flex items-center"><svg class="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg> Інфографіку</li>
+                        </ul>
+                        <p class="text-xs text-gray-500 mt-4 italic">Не потрібно надсилати ці матеріали викладачу. Це практичне завдання для самостійного тестування можливостей.</p>
+                    </div>
+
+                    <!-- Час і результат -->
+                    <div class="space-y-4">
+                        <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 shadow-sm text-sm text-gray-700">
+                            <span class="font-bold text-nixDarkBlue">💡 Порада:</span> Не намагайтеся зробити ідеальний контент. Експериментуйте, змінюйте запити та дивіться, як набір джерел перетворюється на різні формати.
+                        </div>
+
+                        <div class="bg-nixDarkGrey text-white rounded-lg p-5 shadow-md border-l-4 border-nixLightBlue">
+                            <h4 class="font-bold text-nixLightBlue flex items-center mb-2">
+                                <span class="text-xl mr-2">🎯</span> Головний результат
+                            </h4>
+                            <p class="text-sm text-gray-300 mb-2">Після завдання ви маєте зрозуміти не тільки, «що таке NotebookLM», а й побачити практичний сценарій:</p>
+                            <p class="text-xs font-mono text-nixLightRed font-bold bg-white/10 p-2 rounded block">
+                                джерела → дослідження → аналіз → таблиця → презентація → аудіо → відео → інфографіка
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </div>
+
+    <footer class="bg-white border-t border-gray-200 mt-auto py-8 w-full">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center">
+            <img src="nix_logo_main (4)_2.png" alt="NIX Logo" class="h-10 object-contain mb-4 hover:opacity-90 transition-opacity">
+            <p class="text-sm text-nixGreyPurple text-center">© 2026 NIX. Практика роботи з AI-інструментами.<br>Всі права захищено.</p>
+        </div>
+    </footer>
+
+</body>
+</html>
