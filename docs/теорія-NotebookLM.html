@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NotebookLM: Універсальний Асистент</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            blue: '#00A6EB',
+                            red: '#E60036',
+                            lightBlue: '#81D0F4',
+                            lightRed: '#EF958C',
+                            darkBlue: '#2A668E',
+                            mauve: '#937C8A',
+                            dark: '#302A40',
+                            darkRed: '#951B3C'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            background-color: #ffffff;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.6s ease-in-out, transform 0.6s ease-in-out;
+            transform: translateY(20px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            box-sizing: border-box;
+            background-color: #ffffff;
+        }
+
+        .slide.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+            z-index: 10;
+        }
+
+        .slide-content {
+            max-width: 1100px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 1rem;
+            scrollbar-width: thin; 
+            scrollbar-color: #00A6EB transparent;
+        }
+        .slide-content::-webkit-scrollbar {
+            width: 6px;
+        }
+        .slide-content::-webkit-scrollbar-thumb {
+            background-color: #00A6EB;
+            border-radius: 10px;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 350px;
+            margin: 0 auto;
+            height: 350px;
+        }
+
+        .nav-btn {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 50;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #00A6EB;
+            color: #00A6EB;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(0, 166, 235, 0.2);
+        }
+
+        .nav-btn:hover {
+            background: #00A6EB;
+            color: #ffffff;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .nav-btn:disabled {
+            border-color: #ccc;
+            color: #ccc;
+            cursor: not-allowed;
+            background: #f9f9f9;
+            box-shadow: none;
+            transform: translateY(-50%);
+        }
+
+        #prevBtn { left: 20px; }
+        #nextBtn { right: 20px; }
+
+        .pagination {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 50;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 80%;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #e5e7eb;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .dot.active {
+            background-color: #E60036;
+            transform: scale(1.3);
+        }
+
+        .bg-shape {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: -1;
+            opacity: 0.15;
+        }
+
+        /* Styles for Drag & Drop Quiz */
+        .draggable-item {
+            cursor: grab;
+            user-select: none;
+        }
+        .draggable-item:active {
+            cursor: grabbing;
+        }
+        .drop-zone.drag-over {
+            background-color: #81D0F4;
+            border-color: #00A6EB;
+            border-style: solid;
+        }
+        select {
+            appearance: auto;
+        }
+    </style>
+</head>
+<body class="text-brand-dark">
+
+    <!-- Фоновий декор -->
+    <div class="bg-shape bg-brand-blue w-96 h-96 top-[-10%] left-[-10%]"></div>
+    <div class="bg-shape bg-brand-red w-96 h-96 bottom-[-10%] right-[-10%]"></div>
+
+    <!-- Кнопки навігації -->
+    <button id="prevBtn" class="nav-btn" onclick="changeSlide(-1)" aria-label="Попередній слайд">❮</button>
+    <button id="nextBtn" class="nav-btn" onclick="changeSlide(1)" aria-label="Наступний слайд">❯</button>
+
+    <!-- Пагінація -->
+    <div id="pagination" class="pagination"></div>
+
+    <!-- СЛАЙД 1: Титульний -->
+    <section class="slide active" id="slide-0">
+        <div class="slide-content flex flex-col justify-center items-center text-center h-full">
+            <img src="data:image/png;base64,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" alt="Логотип компанії" class="h-16 mb-8 object-contain">
+            <h1 class="text-5xl md:text-6xl font-bold text-brand-dark mb-4 tracking-tight">
+                NotebookLM: Ваш <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-blue to-brand-red">Асистент</span>
+            </h1>
+            <p class="text-xl text-brand-dark/70 max-w-3xl mt-4">
+                Інноваційний інструмент для глибокої роботи з документами. Ваш надійний помічник у навчанні, викладанні, науковій роботі, бізнесі, а також для вирішення складних аналітичних завдань у військовій справі та креативних індустріях.
+            </p>
+        </div>
+    </section>
+
+    <!-- СЛАЙД 2: Grounded AI -->
+    <section class="slide" id="slide-1">
+        <div class="slide-content flex flex-col md:flex-row items-center gap-12 h-full justify-center">
+            <div class="flex-1 space-y-6">
+                <span class="text-brand-red font-bold uppercase tracking-wider text-sm">Базові концепції</span>
+                <h2 class="text-4xl font-bold text-brand-dark">Що таке <span class="text-brand-blue">Grounded AI</span>?</h2>
+                <p class="text-lg text-brand-dark/80">
+                    NotebookLM працює за принципом «штучного інтелекту з прив'язкою до джерел». Модель навчається виключно на тих матеріалах, які ви їй завантажили.
+                </p>
+                <div class="space-y-4 mt-6">
+                    <div class="flex items-start gap-4">
+                        <div class="text-brand-blue text-2xl mt-1">🎯</div>
+                        <div>
+                            <h4 class="font-bold text-brand-dark">Без "галюцинацій"</h4>
+                            <p class="text-sm text-brand-dark/70">ШІ не вигадує факти з інтернету. Він спирається лише на ваші дані.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="text-brand-red text-2xl mt-1">🔒</div>
+                        <div>
+                            <h4 class="font-bold text-brand-dark">Конфіденційність</h4>
+                            <p class="text-sm text-brand-dark/70">Ваші документи не використовуються для тренування публічних моделей.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="text-brand-darkBlue text-2xl mt-1">🔗</div>
+                        <div>
+                            <h4 class="font-bold text-brand-dark">Пряме цитування</h4>
+                            <p class="text-sm text-brand-dark/70">Обов'язкові посилання на конкретні абзаци у завантажених файлах.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex-1 bg-gray-50 rounded-2xl p-8 border border-gray-100 shadow-inner w-full flex flex-col items-center justify-center">
+                 <div class="text-[120px] text-center leading-none text-brand-blue opacity-80">🤖</div>
+                 <p class="text-center text-brand-dark/50 mt-4 font-medium uppercase tracking-widest text-sm">Експерт з ваших даних</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- СЛАЙД 3: Архітектура -->
+    <section class="slide" id="slide-2">
+        <div class="slide-content flex flex-col md:flex-row items-center gap-12 h-full justify-center">
+            <div class="flex-1">
+                <span class="text-brand-blue font-bold uppercase tracking-wider text-sm mb-2 block">Організація роботи</span>
+                <h2 class="text-4xl font-bold text-brand-dark mb-6">Архітектура Джерел</h2>
+                <div class="space-y-6">
+                    <div class="bg-white p-5 rounded-xl border-l-4 border-brand-blue shadow-sm">
+                        <h4 class="font-bold text-brand-dark text-lg">Блокноти (Notebooks)</h4>
+                        <p class="text-sm text-brand-dark/70">Ізольовані проєкти (напр., "Історія 10 клас", "Звіт розвідки" або "Сценарій фільму").</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl border-l-4 border-brand-red shadow-sm">
+                        <h4 class="font-bold text-brand-dark text-lg">Джерела (Sources)</h4>
+                        <p class="text-sm text-brand-dark/70">До 50 джерел у блокноті. До 500,000 слів у кожному джерелі.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="flex-1 w-full flex flex-col items-center">
+                <h4 class="font-semibold text-brand-dark mb-4">Допустимі формати:</h4>
+                <div class="chart-container">
+                    <canvas id="sourcesChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- СЛАЙД 4: Інструментарій -->
+    <section class="slide" id="slide-3">
+        <div class="slide-content flex flex-col justify-center h-full">
+            <div class="text-center mb-8">
+                <span class="text-brand-red font-bold uppercase tracking-wider text-sm block mb-2">Повний арсенал можливостей</span>
+                <h2 class="text-4xl font-bold text-brand-dark">Що реально вміє NotebookLM?</h2>
+            </div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+                <!-- Картка 1 -->
+                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-brand-blue transition-colors">
+                    <div class="text-3xl mb-3 text-brand-blue">💬</div>
+                    <h3 class="font-bold text-lg mb-1 text-brand-dark">Мульти-документний чат</h3>
+                    <p class="text-xs text-brand-dark/70 leading-relaxed">Аналізує до 50 джерел одночасно. Синтезує відповіді, знаходячи неочевидні зв'язки між різними файлами.</p>
+                </div>
+                <!-- Картка 2 -->
+                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-brand-red transition-colors">
+                    <div class="text-3xl mb-3 text-brand-red">🔗</div>
+                    <h3 class="font-bold text-lg mb-1 text-brand-dark">Клікабельні цитати</h3>
+                    <p class="text-xs text-brand-dark/70 leading-relaxed">Кожен факт підкріплений посиланням. Клікніть на маркер (цифру), і відкриється точний абзац в оригіналі.</p>
+                </div>
+                <!-- Картка 3 -->
+                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-brand-darkBlue transition-colors">
+                    <div class="text-3xl mb-3 text-brand-darkBlue">⚡</div>
+                    <h3 class="font-bold text-lg mb-1 text-brand-dark">Гайди в один клік</h3>
+                    <p class="text-xs text-brand-dark/70 leading-relaxed">Автоматичне створення FAQ, бриф-документів, хронологій подій (Timeline) та конспектів (Study Guide).</p>
+                </div>
+                <!-- Картка 4 -->
+                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-brand-dark transition-colors">
+                    <div class="text-3xl mb-3 text-brand-dark">🎧</div>
+                    <h3 class="font-bold text-lg mb-1 text-brand-dark">Керований Audio Overview</h3>
+                    <p class="text-xs text-brand-dark/70 leading-relaxed">Генерує ШІ-подкаст на основі ваших даних. Можна "спрямовувати" ведучих, задаючи фокус дискусії (Prompt).</p>
+                </div>
+                <!-- Картка 5 -->
+                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-brand-mauve transition-colors">
+                    <div class="text-3xl mb-3 text-brand-mauve">📌</div>
+                    <h3 class="font-bold text-lg mb-1 text-brand-dark">Збережені нотатки</h3>
+                    <p class="text-xs text-brand-dark/70 leading-relaxed">Зберігайте найкращі відповіді ШІ (Pin) на спеціальній дошці, щоб згодом скомпілювати їх у фінальний текст.</p>
+                </div>
+                <!-- Картка 6 -->
+                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-brand-lightBlue transition-colors">
+                    <div class="text-3xl mb-3 text-brand-lightBlue">🎯</div>
+                    <h3 class="font-bold text-lg mb-1 text-brand-dark">Фільтрація джерел</h3>
+                    <p class="text-xs text-brand-dark/70 leading-relaxed">Можливість спілкуватися з усім блокнотом або вибрати лише 1-2 конкретні документи для точкового пошуку.</p>
+                </div>
+                <!-- Картка 7 -->
+                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-brand-lightRed transition-colors">
+                    <div class="text-3xl mb-3 text-brand-lightRed">💡</div>
+                    <h3 class="font-bold text-lg mb-1 text-brand-dark">Пропоновані питання</h3>
+                    <p class="text-xs text-brand-dark/70 leading-relaxed">Блокнот автоматично генерує релевантні запитання до ваших текстів, допомагаючи побачити приховані аспекти.</p>
+                </div>
+                <!-- Картка 8 -->
+                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-brand-blue transition-colors">
+                    <div class="text-3xl mb-3 text-brand-blue">▶️</div>
+                    <h3 class="font-bold text-lg mb-1 text-brand-dark">Мультимедійність</h3>
+                    <p class="text-xs text-brand-dark/70 leading-relaxed">Працює не лише з текстом, а й розпізнає та аналізує транскрипти YouTube-відео та завантажені аудіофайли.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- СЛАЙД 5: Освітяни - Викладачі -->
+    <section class="slide" id="slide-4">
+        <div class="slide-content flex flex-col justify-center min-h-full py-8">
+            <div class="text-center mb-8">
+                <div class="text-6xl mb-2">🏫</div>
+                <h2 class="text-4xl font-bold text-brand-dark">Освітяни: Викладачі та Вчителі</h2>
+                <p class="text-brand-dark/70 text-lg">Школи, коледжі та ЗВО. Спрощення рутини та відповідність стандартам.</p>
+            </div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
+                <div class="bg-white p-5 rounded-xl border border-brand-blue/30 shadow-sm">
+                    <h4 class="font-bold text-brand-blue mb-1 flex items-center gap-2"><span>📚</span> Навчальні матеріали</h4>
+                    <p class="text-sm text-brand-dark/70">Швидка адаптація підручників, оновлення методичок та створення сучасних лекційних курсів.</p>
+                </div>
+                <div class="bg-white p-5 rounded-xl border border-brand-blue/30 shadow-sm">
+                    <h4 class="font-bold text-brand-blue mb-1 flex items-center gap-2"><span>✅</span> Оцінювання</h4>
+                    <p class="text-sm text-brand-dark/70">Миттєва генерація формувальних тестів, екзаменаційних білетів та практичних завдань з ключами.</p>
+                </div>
+                <div class="bg-white p-5 rounded-xl border border-brand-blue/30 shadow-sm">
+                    <h4 class="font-bold text-brand-blue mb-1 flex items-center gap-2"><span>📑</span> Силабуси та ОПП</h4>
+                    <p class="text-sm text-brand-dark/70">Формування структури курсів на основі державних стандартів (НУШ) та професійних вимог.</p>
+                </div>
+                <div class="bg-white p-5 rounded-xl border border-brand-blue/30 shadow-sm">
+                    <h4 class="font-bold text-brand-blue mb-1 flex items-center gap-2"><span>🧩</span> Інклюзія</h4>
+                    <p class="text-sm text-brand-dark/70">Спрощення складних текстів або адаптація завдань для здобувачів освіти з ООП.</p>
+                </div>
+                <div class="bg-white p-5 rounded-xl border border-brand-blue/30 shadow-sm">
+                    <h4 class="font-bold text-brand-blue mb-1 flex items-center gap-2"><span>🔎</span> Акредитація (НАЗЯВО)</h4>
+                    <p class="text-sm text-brand-dark/70">Аналіз робочих програм на предмет невідповідностей вимогам акредитаційних агентств.</p>
+                </div>
+                <div class="bg-white p-5 rounded-xl border border-brand-blue/30 shadow-sm">
+                    <h4 class="font-bold text-brand-blue mb-1 flex items-center gap-2"><span>🎭</span> Позакласна робота</h4>
+                    <p class="text-sm text-brand-dark/70">Генерація сценаріїв виховних годин та аналітика успішності для батьківських зборів.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- СЛАЙД 6: Освітяни - Студенти -->
+    <section class="slide" id="slide-5">
+        <div class="slide-content flex flex-col justify-center min-h-full py-8">
+            <div class="text-center mb-8">
+                <div class="text-6xl mb-2">🎓</div>
+                <h2 class="text-4xl font-bold text-brand-dark">Освітяни: Студенти</h2>
+                <p class="text-brand-dark/70 text-lg">Оптимізація процесу навчання, підготовка до сесії та наукова робота.</p>
+            </div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4 w-full">
+                <div class="bg-white p-6 rounded-xl border border-brand-lightBlue shadow-sm">
+                    <div class="text-3xl mb-2">📝</div>
+                    <h4 class="font-bold text-brand-dark mb-1">Робота з лекціями</h4>
+                    <p class="text-sm text-brand-dark/70">Завантаження заплутаних PDF чи презентацій для створення структурованих, зрозумілих конспектів.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl border border-brand-lightBlue shadow-sm">
+                    <div class="text-3xl mb-2">🎧</div>
+                    <h4 class="font-bold text-brand-dark mb-1">Audio-навчання</h4>
+                    <p class="text-sm text-brand-dark/70">Генерація подкастів (Audio Overview) за темами курсу, щоб слухати матеріал дорогою в університет.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl border border-brand-lightBlue shadow-sm">
+                    <div class="text-3xl mb-2">🎯</div>
+                    <h4 class="font-bold text-brand-dark mb-1">Підготовка до сесії</h4>
+                    <p class="text-sm text-brand-dark/70">Автоматичне створення FAQ, карток для запам'ятовування (flashcards) та тренувальних тестів.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl border border-brand-lightBlue shadow-sm">
+                    <div class="text-3xl mb-2">💡</div>
+                    <h4 class="font-bold text-brand-dark mb-1">Курсові та Дипломні</h4>
+                    <p class="text-sm text-brand-dark/70">Пошук необхідних цитат серед десятків наукових джерел, аналіз іншомовних статей рідною мовою.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- СЛАЙД 7: Освітяни - Науковці -->
+    <section class="slide" id="slide-6">
+        <div class="slide-content flex flex-col justify-center min-h-full py-8">
+            <div class="text-center mb-8">
+                <div class="text-6xl mb-2">🔬</div>
+                <h2 class="text-4xl font-bold text-brand-dark">Освітяни: Науковці</h2>
+                <p class="text-brand-dark/70 text-lg">Аналіз літератури, пошук прогалин та написання статей.</p>
+            </div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 w-full text-left">
+                <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                    <div class="text-3xl mb-2 text-brand-blue">📚</div>
+                    <h4 class="font-bold text-brand-dark mb-1">Огляд Літератури</h4>
+                    <p class="text-sm text-brand-dark/70">Синтез матеріалу з 50 статей: знаходження спільних патернів та відмінностей.</p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                    <div class="text-3xl mb-2 text-brand-red">📊</div>
+                    <h4 class="font-bold text-brand-dark mb-1">Research Gaps</h4>
+                    <p class="text-sm text-brand-dark/70">Пошук "прогалин". Запит: "Які аспекти залишилися недостатньо дослідженими?"</p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                    <div class="text-3xl mb-2 text-brand-darkBlue">💰</div>
+                    <h4 class="font-bold text-brand-dark mb-1">Грантові Заявки</h4>
+                    <p class="text-sm text-brand-dark/70">Порівняння чорнетки заявки з вимогами фонду для пошуку слабких місць.</p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                    <div class="text-3xl mb-2 text-brand-blue">📝</div>
+                    <h4 class="font-bold text-brand-dark mb-1">Підготовка Статей</h4>
+                    <p class="text-sm text-brand-dark/70">Адаптація структури вашої статті під специфічні вимоги журналів (Scopus/WoS).</p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                    <div class="text-3xl mb-2 text-brand-red">🎤</div>
+                    <h4 class="font-bold text-brand-dark mb-1">Конференції</h4>
+                    <p class="text-sm text-brand-dark/70">Автоматичне генерування тез або тексту виступу на основі вашого великого дослідження.</p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                    <div class="text-3xl mb-2 text-brand-darkBlue">📈</div>
+                    <h4 class="font-bold text-brand-dark mb-1">Якісний Аналіз Даних</h4>
+                    <p class="text-sm text-brand-dark/70">Швидкий аналіз сотень сторінок розшифровок глибинних інтерв'ю або фокус-груп.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- СЛАЙД 8: Військові -->
+    <section class="slide" id="slide-7">
+        <div class="slide-content flex flex-col justify-center min-h-full py-8">
+            <div class="text-center mb-8">
+                <div class="text-6xl mb-2">🛡️</div>
+                <h2 class="text-4xl font-bold text-brand-dark">Військова Сфера</h2>
+                <p class="text-brand-dark/70 text-lg">Точність, безпека та швидка обробка масивів даних.</p>
+            </div>
+            <div class="grid md:grid-cols-2 gap-6 w-full max-w-4xl mx-auto">
+                <div class="bg-brand-dark text-white p-6 rounded-2xl border border-gray-800 shadow-md">
+                    <div class="text-3xl mb-3">📡</div>
+                    <h4 class="font-bold text-xl mb-2">Аналіз розвідданих</h4>
+                    <p class="text-gray-300 text-sm">Швидка обробка, переклад та синтез великих масивів текстової інформації: звітів, радіоперехоплень, OSINT-статей.</p>
+                </div>
+                <div class="bg-brand-dark text-white p-6 rounded-2xl border border-gray-800 shadow-md">
+                    <div class="text-3xl mb-3">🗺️</div>
+                    <h4 class="font-bold text-xl mb-2">Стандарти НАТО</h4>
+                    <p class="text-gray-300 text-sm">Завантаження доктрин STANAG та статутів для миттєвого пошуку необхідних процедур та протоколів у польових умовах.</p>
+                </div>
+                <div class="bg-brand-dark text-white p-6 rounded-2xl border border-gray-800 shadow-md">
+                    <div class="text-3xl mb-3">⚙️</div>
+                    <h4 class="font-bold text-xl mb-2">Технічні мануали</h4>
+                    <p class="text-gray-300 text-sm">Взаємодія з багатосторінковими англомовними інструкціями до західного озброєння. Пошук точних відповідей щодо ремонту та експлуатації.</p>
+                </div>
+                <div class="bg-brand-dark text-white p-6 rounded-2xl border border-gray-800 shadow-md">
+                    <div class="text-3xl mb-3">👨‍🏫</div>
+                    <h4 class="font-bold text-xl mb-2">Навчання особового складу</h4>
+                    <p class="text-gray-300 text-sm">Створення коротких, зрозумілих витримок, інструктажів та тестів для швидкої підготовки новобранців.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- СЛАЙД 9: Креативна Індустрія -->
+    <section class="slide" id="slide-8">
+        <div class="slide-content flex flex-col justify-center min-h-full py-8">
+            <div class="text-center mb-8">
+                <div class="text-6xl mb-2">🎨</div>
+                <h2 class="text-4xl font-bold text-brand-dark">Креативна Індустрія та Медіа</h2>
+                <p class="text-brand-dark/70 text-lg">Управління контекстом, аналіз конкурентів та пошук нових ідей.</p>
+            </div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+                <div class="bg-white p-6 rounded-xl border-t-4 border-brand-red shadow-sm">
+                    <div class="text-3xl mb-3">✍️</div>
+                    <h4 class="font-bold text-brand-dark mb-2">Сценаристи</h4>
+                    <p class="text-sm text-brand-dark/70">Збереження "лорі" (всесвіту) проєкту. Перевірка величезних чернеток (до 500к слів) на наявність сюжетних дір та нестиковок.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl border-t-4 border-brand-red shadow-sm">
+                    <div class="text-3xl mb-3">📰</div>
+                    <h4 class="font-bold text-brand-dark mb-2">Журналісти</h4>
+                    <p class="text-sm text-brand-dark/70">Швидкий аналіз фінансових звітів, судових реєстрів, розслідувань та транскриптів багатогодинних інтерв'ю.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl border-t-4 border-brand-red shadow-sm">
+                    <div class="text-3xl mb-3">📈</div>
+                    <h4 class="font-bold text-brand-dark mb-2">Маркетологи</h4>
+                    <p class="text-sm text-brand-dark/70">Синтез клієнтських брифів, аналіз конкурентів, створення баз знань та FAQ на основі продуктової документації.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl border-t-4 border-brand-red shadow-sm">
+                    <div class="text-3xl mb-3">🎙️</div>
+                    <h4 class="font-bold text-brand-dark mb-2">Подкастери</h4>
+                    <p class="text-sm text-brand-dark/70">Перетворення розлогих статей на сценарні нариси для епізодів, пошук цікавих кутів та генерація питань для гостей.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- СЛАЙД 10: Бізнес та Підприємці -->
+    <section class="slide" id="slide-9">
+        <div class="slide-content flex flex-col justify-center min-h-full py-8">
+            <div class="text-center mb-8">
+                <div class="text-6xl mb-2">💼</div>
+                <h2 class="text-4xl font-bold text-brand-dark">Бізнес та Підприємництво</h2>
+                <p class="text-brand-dark/70 text-lg">Управління знаннями компанії, аналіз ринку та оптимізація рутини.</p>
+            </div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+                <div class="bg-white p-6 rounded-xl border-t-4 border-brand-blue shadow-sm">
+                    <div class="text-3xl mb-3">📊</div>
+                    <h4 class="font-bold text-brand-dark mb-2">Аналіз ринку</h4>
+                    <p class="text-sm text-brand-dark/70">Завантаження галузевих звітів та статей для швидкого порівняння конкурентів, трендів та стратегій.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl border-t-4 border-brand-blue shadow-sm">
+                    <div class="text-3xl mb-3">🤝</div>
+                    <h4 class="font-bold text-brand-dark mb-2">Робота з договорами</h4>
+                    <p class="text-sm text-brand-dark/70">Швидкий пошук умов, термінів або прихованих ризиків у багатосторінкових контрактах і тендерній документації.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl border-t-4 border-brand-blue shadow-sm">
+                    <div class="text-3xl mb-3">👥</div>
+                    <h4 class="font-bold text-brand-dark mb-2">Онбординг (HR)</h4>
+                    <p class="text-sm text-brand-dark/70">Створення корпоративної бази знань та FAQ для нових співробітників на основі внутрішніх політик і регламентів.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl border-t-4 border-brand-blue shadow-sm">
+                    <div class="text-3xl mb-3">📝</div>
+                    <h4 class="font-bold text-brand-dark mb-2">Аналіз нарад</h4>
+                    <p class="text-sm text-brand-dark/70">Завантаження транскриптів зустрічей (Zoom/Meet) для миттєвого виділення головних рішень та завдань (action items).</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- СЛАЙД 11: Джерела -->
+    <section class="slide" id="slide-10">
+        <div class="slide-content flex flex-col justify-center h-full w-full max-w-4xl mx-auto">
+            <div class="text-center mb-8">
+                <div class="text-5xl mb-4">📚</div>
+                <h2 class="text-4xl font-bold text-brand-dark">Корисні Джерела</h2>
+                <p class="text-brand-dark/70 mt-2">Поглибте свої знання за допомогою матеріалів від українських експертів.</p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-4">
+                <a href="https://osvitoria.media/experience/yak-pratsyuvaty-z-shi-v-canva-notebooklm-i-briskteaching-praktychni-porady-dlya-vchyteliv/#:~:text=%D1%81%D1%82%D0%B2%D0%BE%D1%80%D0%B8%D1%82%D0%B8%20%D1%84%D0%B5%D0%B9%D0%BA%D0%BE%D0%B2%D1%83%20%D0%BE%D1%81%D0%BE%D0%B1%D0%B8%D1%81%D1%82%D1%96%D1%81%D1%82%D1%8C.-,%D0%9A%D0%BE%D1%80%D0%B8%D1%81%D1%82%D1%83%D1%94%D1%82%D0%B5%D1%81%D1%8C%20%D1%82%D1%96%D0%BB%D1%8C%D0%BA%D0%B8%20ChatGPT%3F%20%D0%97%D0%BC%D1%96%D0%BD%D1%96%D1%82%D1%8C%20%D0%BF%D0%B0%D1%80%D0%B0%D0%B4%D0%B8%D0%B3%D0%BC%D1%83%3A%20NotebookLM%20%E2%80%94%20%D0%BD%D0%B5%20%D0%BF%D1%80%D0%BE%D1%81%D1%82%D0%BE%20%D0%A8%D0%86%2D%D1%87%D0%B0%D1%82%2C%20%D0%B0%20%D0%B2%D0%B0%D1%88%20%D0%BF%D0%B5%D1%80%D1%81%D0%BE%D0%BD%D0%B0%D0%BB%D1%8C%D0%BD%D0%B8%D0%B9%20%D0%B0%D1%81%D0%B8%D1%81%D1%82%D0%B5%D0%BD%D1%82,-%D0%91%D0%B0%D0%B3%D0%B0%D1%82%D0%BE%20%D1%85%D1%82%D0%BE%20%D0%B7%D0%B2%D0%B8%D0%BA" target="_blank" class="block bg-gray-50 p-5 rounded-xl border border-gray-200 hover:border-brand-blue hover:shadow-md transition-all">
+                    <h4 class="font-bold text-brand-blue text-lg mb-1">Освіторія Медіа</h4>
+                    <p class="text-sm text-brand-dark/80">Змініть парадигму: NotebookLM — ваш персональний асистент. Практичні поради для вчителів.</p>
+                </a>
+                
+                <a href="https://znayshov.com/News/Details/mozhlyvosti_notebooklm_dlia_pedahohiv_Yak_shtuchnyi_intelekt_mozhe_staty_vashym_asystentom_u_navchanni" target="_blank" class="block bg-gray-50 p-5 rounded-xl border border-gray-200 hover:border-brand-red hover:shadow-md transition-all">
+                    <h4 class="font-bold text-brand-red text-lg mb-1">Можливості NotebookLM для педагогів</h4>
+                    <p class="text-sm text-brand-dark/80">Можливості NotebookLM для педагогів. Як ШІ може стати вашим асистентом у навчанні.</p>
+                </a>
+
+                <a href="https://znayshov.com/News/Details/notebooklm_v_osviti_10_neochevydnykh_sposobiv_vykorystannia_z_uchniamy" target="_blank" class="block bg-gray-50 p-5 rounded-xl border border-gray-200 hover:border-brand-red hover:shadow-md transition-all">
+                    <h4 class="font-bold text-brand-red text-lg mb-1">NotebookLM в освіті</h4>
+                    <p class="text-sm text-brand-dark/80">10 неочевидних способів використання NotebookLM в освіті з учнями.</p>
+                </a>
+
+                <a href="https://www.youtube.com/watch?v=I1S4lEOnsLQ" target="_blank" class="block bg-gray-50 p-5 rounded-xl border border-gray-200 hover:border-brand-darkBlue hover:shadow-md transition-all">
+                    <h4 class="font-bold text-brand-darkBlue text-lg mb-1 flex items-center gap-2"><span>▶️</span> YouTube Відео</h4>
+                    <p class="text-sm text-brand-dark/80">NotebookLM від Google: Нова ера в роботі з даними (Відеоінструкція).</p>
+                </a>
+
+                <a href="https://apix-drive.com/ua/blog/useful/notebooklm#mozhlivosti-dlja-studentiv-doslidnikiv-ta-profesionaliv" target="_blank" class="block bg-gray-50 p-5 rounded-xl border border-gray-200 hover:border-brand-darkBlue hover:shadow-md transition-all">
+                    <h4 class="font-bold text-brand-darkBlue text-lg mb-1">Можливості для студентів, дослідників та професіоналів</h4>
+                    <p class="text-sm text-brand-dark/80">Огляд NotebookLM: Можливості для студентів, дослідників та професіоналів.</p>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- СЛАЙД 12: Інтерактивний тест -->
+    <section class="slide" id="slide-11">
+        <div class="slide-content flex flex-col justify-start min-h-full py-8 w-full max-w-4xl mx-auto">
+            <div class="text-center mb-6">
+                <span class="text-brand-red font-bold uppercase tracking-wider text-sm mb-1 block">Перевірка знань</span>
+                <h2 class="text-3xl font-bold text-brand-dark mb-2">Закріплення матеріалу</h2>
+                <p class="text-brand-dark/70 text-base">Виконайте завдання, щоб перевірити розуміння базових концепцій.</p>
+            </div>
+
+            <div class="space-y-6">
+                <!-- 1. Пропуски -->
+                <div class="bg-gray-50 p-5 rounded-xl border border-gray-200 shadow-sm">
+                    <h3 class="font-bold text-brand-dark mb-2 flex items-center gap-2"><span class="bg-brand-blue text-white w-5 h-5 rounded-full flex justify-center items-center text-xs">1</span> Пропуски</h3>
+                    <p class="text-brand-dark/80 text-sm leading-relaxed">
+                        NotebookLM базується на підході 
+                        <select id="q1-1" class="border border-brand-blue/50 rounded px-1 py-0.5 bg-white text-brand-blue font-medium outline-none">
+                            <option value="">- Оберіть -</option>
+                            <option value="wrong1">Generative Search</option>
+                            <option value="correct">Grounded AI</option>
+                        </select>. 
+                        Це означає, що ШІ шукає інформацію лише у ваших документах, мінімізуючи ризик 
+                        <select id="q1-2" class="border border-brand-blue/50 rounded px-1 py-0.5 bg-white text-brand-blue font-medium outline-none">
+                            <option value="">- Оберіть -</option>
+                            <option value="wrong2">цитувань</option>
+                            <option value="correct">галюцинацій</option>
+                        </select>.
+                    </p>
+                    <div id="q1-feedback" class="mt-2 text-xs font-medium"></div>
+                </div>
+
+                <!-- 2. Drag & Drop -->
+                <div class="bg-gray-50 p-5 rounded-xl border border-gray-200 shadow-sm">
+                    <h3 class="font-bold text-brand-dark mb-3 flex items-center gap-2"><span class="bg-brand-blue text-white w-5 h-5 rounded-full flex justify-center items-center text-xs">2</span> Зіставлення (Drag & Drop)</h3>
+                    
+                    <div class="flex flex-wrap gap-2 mb-4" id="drag-source" ondrop="drop(event)" ondragover="allowDrop(event)">
+                        <div draggable="true" id="drag-audio" class="draggable-item px-3 py-1 bg-white border border-brand-darkBlue text-brand-darkBlue text-sm font-medium rounded shadow-sm" ondragstart="drag(event)">Audio Overview</div>
+                        <div draggable="true" id="drag-notebook" class="draggable-item px-3 py-1 bg-white border border-brand-red text-brand-red text-sm font-medium rounded shadow-sm" ondragstart="drag(event)">Блокнот</div>
+                        <div draggable="true" id="drag-source-doc" class="draggable-item px-3 py-1 bg-white border border-brand-blue text-brand-blue text-sm font-medium rounded shadow-sm" ondragstart="drag(event)">Джерело</div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="bg-white p-3 rounded-lg border border-gray-200 flex flex-col text-xs">
+                            <p class="mb-2 flex-grow">Ізольований робочий простір для проєкту.</p>
+                            <div id="drop-notebook" class="drop-zone h-10 border-2 border-dashed border-gray-300 rounded flex items-center justify-center transition-colors bg-gray-50" ondrop="drop(event)" ondragover="allowDrop(event)" data-expected="drag-notebook"></div>
+                        </div>
+                        <div class="bg-white p-3 rounded-lg border border-gray-200 flex flex-col text-xs">
+                            <p class="mb-2 flex-grow">Документ (до 500 тис. слів).</p>
+                            <div id="drop-source-doc" class="drop-zone h-10 border-2 border-dashed border-gray-300 rounded flex items-center justify-center transition-colors bg-gray-50" ondrop="drop(event)" ondragover="allowDrop(event)" data-expected="drag-source-doc"></div>
+                        </div>
+                        <div class="bg-white p-3 rounded-lg border border-gray-200 flex flex-col text-xs">
+                            <p class="mb-2 flex-grow">Розмовний подкаст на основі матеріалів.</p>
+                            <div id="drop-audio" class="drop-zone h-10 border-2 border-dashed border-gray-300 rounded flex items-center justify-center transition-colors bg-gray-50" ondrop="drop(event)" ondragover="allowDrop(event)" data-expected="drag-audio"></div>
+                        </div>
+                    </div>
+                    <div id="q2-feedback" class="mt-2 text-xs font-medium"></div>
+                </div>
+
+                <!-- 3. Вибір -->
+                <div class="bg-gray-50 p-5 rounded-xl border border-gray-200 shadow-sm">
+                    <h3 class="font-bold text-brand-dark mb-2 flex items-center gap-2"><span class="bg-brand-blue text-white w-5 h-5 rounded-full flex justify-center items-center text-xs">3</span> Конфіденційність</h3>
+                    <div class="space-y-2">
+                        <label class="flex items-start gap-2 p-2 border border-gray-200 rounded cursor-pointer hover:bg-white text-sm">
+                            <input type="radio" name="q3" value="wrong1" class="mt-0.5 w-4 h-4 text-brand-blue">
+                            <span>Всі дані зберігаються офлайн на ПК.</span>
+                        </label>
+                        <label class="flex items-start gap-2 p-2 border border-gray-200 rounded cursor-pointer hover:bg-white text-sm">
+                            <input type="radio" name="q3" value="correct" class="mt-0.5 w-4 h-4 text-brand-blue">
+                            <span>Дані не тренують публічні моделі ШІ Google.</span>
+                        </label>
+                    </div>
+                    <div id="q3-feedback" class="mt-2 text-xs font-medium"></div>
+                </div>
+
+                <div class="text-center pt-2">
+                    <button onclick="checkQuiz()" class="bg-brand-red hover:bg-brand-darkRed text-white font-bold py-2 px-6 rounded-full shadow transition-colors text-sm">Перевірити</button>
+                    <div id="quiz-final-score" class="mt-3 text-xl font-bold text-brand-dark hidden"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- СЛАЙД 13: Фінал -->
+    <section class="slide" id="slide-12">
+        <div class="slide-content flex flex-col justify-center items-center text-center h-full">
+            <img src="data:image/png;base64,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" alt="Логотип компанії" class="h-16 mb-8 object-contain">
+            <h2 class="text-5xl font-bold text-brand-dark mb-4">Готові розпочати?</h2>
+            <p class="text-xl text-brand-dark/70 mb-8">
+                Тепер ви знаєте, як цей інструмент може стати вашим надійним помічником.
+            </p>
+            
+            <div class="flex flex-col items-center gap-4">
+                <button onclick="goToSlide(0)" class="px-6 py-3 bg-gray-100 hover:bg-gray-200 rounded-full text-brand-dark font-medium transition-colors w-64 text-center">
+                    Повернутися на початок
+                </button>
+                <a href="https://valkirie-dev.github.io/NotebookLM-lecture/NotebookLM-%D0%BF%D1%80%D0%B0%D0%BA%D1%82%D0%B8%D0%BA%D1%83%D0%BC.html" target="_blank" class="px-8 py-4 bg-brand-blue hover:bg-brand-darkBlue text-white rounded-full font-bold transition-colors shadow-lg text-lg w-64 text-center">
+                    Перейти до практики
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- JS Логіка Слайдера, Графіка та Квізу -->
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        let currentSlide = 0;
+        let sourcesChartInstance = null; 
+
+        // Ініціалізація пагінації
+        const paginationContainer = document.getElementById('pagination');
+        for (let i = 0; i < totalSlides; i++) {
+            const dot = document.createElement('div');
+            dot.classList.add('dot');
+            if (i === 0) dot.classList.add('active');
+            dot.onclick = () => goToSlide(i);
+            paginationContainer.appendChild(dot);
+        }
+        const dots = document.querySelectorAll('.dot');
+
+        function updateUI() {
+            slides.forEach((slide, index) => {
+                if (index === currentSlide) {
+                    slide.classList.add('active');
+                    const content = slide.querySelector('.slide-content');
+                    if(content) content.scrollTop = 0;
+                } else {
+                    slide.classList.remove('active');
+                    slide.style.transform = index < currentSlide ? 'translateY(-20px)' : 'translateY(20px)';
+                }
+            });
+
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentSlide);
+            });
+
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+
+            // Ініціалізація графіка тільки при появі відповідного слайду
+            if (slides[currentSlide].id === 'slide-2' && !sourcesChartInstance) {
+                initSourcesChart();
+            }
+        }
+
+        function changeSlide(direction) {
+            let newSlide = currentSlide + direction;
+            if (newSlide >= 0 && newSlide < totalSlides) {
+                currentSlide = newSlide;
+                updateUI();
+            }
+        }
+
+        function goToSlide(index) {
+            currentSlide = index;
+            updateUI();
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                changeSlide(1);
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                changeSlide(-1);
+            }
+        });
+
+        function initSourcesChart() {
+            const chartCanvas = document.getElementById('sourcesChart');
+            if (!chartCanvas) return;
+            const ctx = chartCanvas.getContext('2d');
+            sourcesChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['PDF', 'Google Docs', 'URLs', 'YouTube', 'Аудіо', 'Текст'],
+                    datasets: [{
+                        data: [1, 1, 1, 1, 1, 1],
+                        backgroundColor: ['#00A6EB', '#E60036', '#81D0F4', '#EF958C', '#2A668E', '#937C8A'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff',
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { 
+                            position: 'bottom', 
+                            labels: { font: { family: "'Inter', sans-serif" } } 
+                        } 
+                    },
+                    cutout: '60%',
+                    animation: { duration: 1500, easing: 'easeOutQuart' }
+                }
+            });
+        }
+
+        // --- ЛОГІКА DRAG AND DROP ---
+        function allowDrop(ev) {
+            ev.preventDefault();
+            if(ev.target.classList.contains('drop-zone')) {
+                ev.target.classList.add('drag-over');
+            }
+        }
+
+        document.addEventListener('dragleave', function(ev) {
+            if(ev.target.classList.contains('drop-zone')) {
+                ev.target.classList.remove('drag-over');
+            }
+        });
+
+        function drag(ev) {
+            ev.dataTransfer.setData("text/plain", ev.target.id);
+        }
+
+        function drop(ev) {
+            ev.preventDefault();
+            if(ev.target.classList.contains('drop-zone')) {
+                ev.target.classList.remove('drag-over');
+            }
+            
+            var data = ev.dataTransfer.getData("text/plain");
+            var draggedEl = document.getElementById(data);
+            var target = ev.target;
+
+            if (target.classList.contains('drop-zone') && target.children.length === 0) {
+                target.appendChild(draggedEl);
+            } 
+            else if (target.id === 'drag-source' || target.closest('#drag-source')) {
+                document.getElementById('drag-source').appendChild(draggedEl);
+            }
+            else if (target.classList.contains('drop-zone') && target.children.length > 0) {
+                let existingItem = target.children[0];
+                document.getElementById('drag-source').appendChild(existingItem);
+                target.appendChild(draggedEl);
+            }
+            else if (target.classList.contains('draggable-item') && target.parentElement.classList.contains('drop-zone')) {
+                let dropZone = target.parentElement;
+                document.getElementById('drag-source').appendChild(target); 
+                dropZone.appendChild(draggedEl); 
+            }
+        }
+
+        // --- ЛОГІКА ПЕРЕВІРКИ ТЕСТУ ---
+        function checkQuiz() {
+            let score = 0;
+
+            // 1
+            let q1_1 = document.getElementById('q1-1').value;
+            let q1_2 = document.getElementById('q1-2').value;
+            let fb1 = document.getElementById('q1-feedback');
+            if (q1_1 === 'correct' && q1_2 === 'correct') {
+                score++;
+                fb1.innerHTML = '✅ Правильно!';
+                fb1.className = "mt-2 text-xs font-medium text-green-600";
+            } else {
+                fb1.innerHTML = '❌ Є помилки. Спробуйте ще раз.';
+                fb1.className = "mt-2 text-xs font-medium text-brand-red";
+            }
+
+            // 2
+            let drops = [
+                document.getElementById('drop-notebook'),
+                document.getElementById('drop-source-doc'),
+                document.getElementById('drop-audio')
+            ];
+            let dndCorrect = true;
+            let dndFilled = true;
+            drops.forEach(dropZone => {
+                if(dropZone.children.length === 0) {
+                    dndFilled = false;
+                    dndCorrect = false;
+                } else if (dropZone.children[0].id !== dropZone.dataset.expected) {
+                    dndCorrect = false;
+                }
+            });
+            let fb2 = document.getElementById('q2-feedback');
+            if (dndCorrect && dndFilled) {
+                score++;
+                fb2.innerHTML = '✅ Усі терміни зіставлено вірно!';
+                fb2.className = "mt-2 text-xs font-medium text-green-600";
+            } else if (!dndFilled) {
+                fb2.innerHTML = '⚠️ Заповніть усі комірки.';
+                fb2.className = "mt-2 text-xs font-medium text-orange-500";
+            } else {
+                fb2.innerHTML = '❌ Деякі терміни стоять не на своїх місцях.';
+                fb2.className = "mt-2 text-xs font-medium text-brand-red";
+            }
+
+            // 3
+            let fb3 = document.getElementById('q3-feedback');
+            let q3_answer = document.querySelector('input[name="q3"]:checked');
+            if (q3_answer && q3_answer.value === 'correct') {
+                score++;
+                fb3.innerHTML = '✅ Правильно!';
+                fb3.className = "mt-2 text-xs font-medium text-green-600";
+            } else if (!q3_answer) {
+                fb3.innerHTML = '⚠️ Виберіть варіант.';
+                fb3.className = "mt-2 text-xs font-medium text-orange-500";
+            } else {
+                fb3.innerHTML = '❌ Неправильно.';
+                fb3.className = "mt-2 text-xs font-medium text-brand-red";
+            }
+
+            let finalScoreEl = document.getElementById('quiz-final-score');
+            finalScoreEl.classList.remove('hidden');
+            finalScoreEl.innerHTML = `Результат: ${score} з 3`;
+            finalScoreEl.className = score === 3 ? "mt-3 text-xl font-bold text-green-600" : "mt-3 text-xl font-bold text-brand-red";
+        }
+
+        updateUI();
+    </script>
+</body>
+</html>
